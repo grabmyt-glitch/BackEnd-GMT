@@ -1,11 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 
-const supabase = require("./config/supabase");
+const env = require("./config/env");
+const apiRoutes = require("./routes");
+const { notFoundHandler, errorHandler } = require("./middlewares/error.middleware");
 
 const app = express();
 
-app.use(cors());
+const corsOrigin =
+  env.corsOrigin === "*"
+    ? "*"
+    : env.corsOrigin.split(",").map((origin) => origin.trim());
+
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -14,13 +21,18 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api/v1", apiRoutes);
+
 app.get("/health", async (req, res, next) => {
   try {
     return res.status(200).json({
       status: "ok",
       message: "Server is healthy.",
       services: {
-        supabaseConfigured: Boolean(supabase),
+        databaseProvider: env.dbProvider,
+        environment: env.appEnv,
+        port: env.port,
+        host: env.host,
       },
     });
   } catch (error) {
@@ -28,11 +40,7 @@ app.get("/health", async (req, res, next) => {
   }
 });
 
-app.use((err, req, res, next) => {
-  res.status(500).json({
-    message: "Internal server error.",
-    error: err.message,
-  });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 module.exports = app;
