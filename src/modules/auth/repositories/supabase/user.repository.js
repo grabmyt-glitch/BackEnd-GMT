@@ -88,7 +88,7 @@ async function findById(userId) {
 }
 
 async function findAll(filters = {}) {
-  let query = supabase.from(TABLE_NAME).select("*");
+  let query = supabase.from(TABLE_NAME).select("*", { count: "exact" });
 
   if (filters.search) {
     query = query.or(
@@ -97,10 +97,11 @@ async function findAll(filters = {}) {
   }
 
   const limit = Math.min(filters.limit || 20, 100);
-  const offset = (filters.page || 1 - 1) * limit;
+  const page = filters.page || 1;
+  const offset = (page - 1) * limit;
 
   query = query
-    .order("createdAt", { ascending: false })
+    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   const { data, error, count } = await query;

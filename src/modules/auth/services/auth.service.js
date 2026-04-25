@@ -10,6 +10,8 @@ const {
   validateSigninPayload,
 } = require("../models/auth.model");
 const userRepository = require("../repositories/user.repository");
+const emailService = require("../../../services/email.service");
+const emailVerificationService = require("../../../services/email-verification.service");
 
 const BCRYPT_ROUNDS = 10;
 
@@ -56,6 +58,7 @@ async function checkUserExists(payload) {
 async function signup(payload) {
   const validated = validateSignupPayload(payload);
 
+  // Check if user already exists
   const existingUser = await userRepository.findByEmailOrPhone({
     email: validated.email,
     phone: validated.phone,
@@ -65,21 +68,59 @@ async function signup(payload) {
     throw new AppError("User already exists.", 409);
   }
 
+  // Check if there's already a pending verification for this email
+  const existingVerification =
+    await emailVerificationService.checkVerificationRecordExists(
+      validated.email,
+    );
+  if (existingVerification) {
+    throw new AppError(
+      "A verification code has already been sent to this address. Please check your inbox.",
+      409,
+    );
+  }
+
   const passwordHash = validated.password
     ? await hashPassword(validated.password)
     : null;
 
-  const user = await userRepository.create({
-    id: cuid(),
+  // Generate 6-digit OTP
+  const otp = emailVerificationService.generateOTP();
+
+  // Store pending user data with OTP
+  const userData = {
     firstName: validated.firstName,
     lastName: validated.lastName,
     email: validated.email,
     phone: validated.phone,
     passwordHash,
-  });
+    sourceOfCreation: "grabbmytickets",
+  };
 
-  const token = generateToken(user.id, user.email);
-  return toPublicUser(user, token);
+  const verificationRecord = await emailVerificationService.createVerificationRecord(userData, otp);
+
+  // Send verification email with OTP
+  try {
+    await emailService.sendVerificationEmail(
+      validated.email,
+      validated.firstName,
+      otp,
+    );
+  } catch (error) {
+    // If email fails to send, clean up the pending verification record so the user can try again
+    await emailVerificationService.deleteVerificationRecord(verificationRecord.id).catch(console.error);
+    throw new AppError("Failed to send verification email. Please try again.", 500);
+  }
+
+  return {
+    success: true,
+    message:
+      "Signup successful. Please enter the 6-digit code sent to your email to activate your account.",
+    data: {
+      email: validated.email,
+      firstName: validated.firstName,
+    },
+  };
 }
 
 async function signin(payload) {
@@ -108,8 +149,65 @@ async function signin(payload) {
   return toPublicUser(user, token);
 }
 
+async function verifyEmail(email, otp) {
+  if (!email || !otp) {
+    throw new AppError("Email and OTP are required.", 400);
+  }
+
+  // Find the pending verification record by email and OTP
+  const verificationRecord =
+    await emailVerificationService.getVerificationRecordByEmailAndOTP(
+      email,
+      otp,
+    );
+  if (!verificationRecord) {
+    throw new AppError("Invalid or expired verification code.", 401);
+  }
+
+  // Check if token has expired
+  if (new Date() > new Date(verificationRecord.expires_at)) {
+    await emailVerificationService.deleteVerificationRecord(
+      verificationRecord.id,
+    );
+    throw new AppError(
+      "Verification code has expired. Please signup again.",
+      401,
+    );
+  }
+
+  // Create the actual user account
+  const user = await userRepository.create({
+    id: cuid(),
+    firstName: verificationRecord.first_name,
+    lastName: verificationRecord.last_name,
+    email: verificationRecord.email,
+    phone: verificationRecord.phone,
+    passwordHash: verificationRecord.password_hash,
+    sourceOfCreation: verificationRecord.source_of_creation,
+  });
+
+  // Delete the verification record
+  await emailVerificationService.deleteVerificationRecord(
+    verificationRecord.id,
+  );
+
+  // Send welcome email (non-blocking)
+  emailService
+    .sendWelcomeEmail(user.email, user.firstName)
+    .catch(console.error);
+
+  // Generate access token
+  const accessToken = generateToken(user.id, user.email);
+  return {
+    success: true,
+    message: "Email verified successfully. Your account is now active.",
+    data: toPublicUser(user, accessToken),
+  };
+}
+
 module.exports = {
   checkUserExists,
   signup,
+  verifyEmail,
   signin,
 };

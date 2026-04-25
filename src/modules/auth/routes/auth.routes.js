@@ -9,6 +9,7 @@ const router = express.Router();
 // Auth endpoints
 router.post("/users/check", authController.checkUserExists);
 router.post("/signup", authController.signup);
+router.post("/verify-email", authController.verifyEmail);
 router.post("/signin", authController.signin);
 
 // User CRUD endpoints

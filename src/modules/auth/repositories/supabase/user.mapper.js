@@ -6,6 +6,7 @@ function toPersistence(user) {
     email: user.email,
     phone: user.phone,
     password_hash: user.passwordHash,
+    source_of_creation: user.sourceOfCreation,
   };
 }
 
@@ -21,6 +22,7 @@ function toDomain(row) {
     email: row.email,
     phone: row.phone,
     passwordHash: row.password_hash,
+    sourceOfCreation: row.source_of_creation,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

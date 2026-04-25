@@ -8,7 +8,9 @@ const {
 } = require("../utils/auth-payload");
 
 const checkUserExists = asyncHandler(async (req, res) => {
-  const result = await authService.checkUserExists(normalizeUserLookupInput(req.body));
+  const result = await authService.checkUserExists(
+    normalizeUserLookupInput(req.body),
+  );
 
   res.status(200).json({
     success: true,
@@ -18,12 +20,32 @@ const checkUserExists = asyncHandler(async (req, res) => {
 });
 
 const signup = asyncHandler(async (req, res) => {
-  const user = await authService.signup(normalizeSignupInput(req.body));
+  const result = await authService.signup(normalizeSignupInput(req.body));
 
   res.status(201).json({
-    success: true,
-    message: "Signup successful.",
-    data: formatAuthUserResponse(user),
+    success: result.success,
+    message: result.message,
+    data: formatAuthUserResponse(result.data),
+  });
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and OTP are required.",
+      errors: [!email ? "email is missing" : "otp is missing"],
+    });
+  }
+
+  const result = await authService.verifyEmail(email, otp);
+
+  res.status(200).json({
+    success: result.success,
+    message: result.message,
+    data: formatAuthUserResponse(result.data),
   });
 });
 
@@ -40,5 +62,6 @@ const signin = asyncHandler(async (req, res) => {
 module.exports = {
   checkUserExists,
   signup,
+  verifyEmail,
   signin,
 };

@@ -43,6 +43,12 @@ process.env.DB_SSL = process.env.DB_SSL || "true";
 process.env.JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
 process.env.JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
+process.env.BREVO_API_KEY = process.env.BREVO_API_KEY || "";
+process.env.BREVO_SENDER_EMAIL =
+  process.env.BREVO_SENDER_EMAIL || "noreply@example.com";
+process.env.EMAIL_VERIFICATION_EXPIRY =
+  process.env.EMAIL_VERIFICATION_EXPIRY || "15m";
+process.env.FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 module.exports = {
   appEnv: process.env.APP_ENV,
@@ -56,6 +62,10 @@ module.exports = {
   autoRunMigrations: process.env.AUTO_RUN_MIGRATIONS,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiry: process.env.JWT_EXPIRY,
+  brevoApiKey: process.env.BREVO_API_KEY,
+  brevoSenderEmail: process.env.BREVO_SENDER_EMAIL,
+  emailVerificationExpiry: process.env.EMAIL_VERIFICATION_EXPIRY,
+  frontendUrl: process.env.FRONTEND_URL,
   databaseUrlConfigured: Boolean(
     process.env.DATABASE_URL ||
     process.env.SUPABASE_DB_URL ||
