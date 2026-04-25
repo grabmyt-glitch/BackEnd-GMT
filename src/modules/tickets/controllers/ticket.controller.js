@@ -7,7 +7,10 @@ const {
 } = require("../utils/ticket-payload");
 
 const createTicket = asyncHandler(async (req, res) => {
-  const ticket = await ticketService.createTicket(normalizeTicketInput(req.body));
+  const ticket = await ticketService.createTicket(
+    normalizeTicketInput(req.body),
+    req.user.userId,
+  );
 
   res.status(201).json({
     success: true,
@@ -17,7 +20,9 @@ const createTicket = asyncHandler(async (req, res) => {
 });
 
 const listTickets = asyncHandler(async (req, res) => {
-  const result = await ticketService.listTickets(normalizeTicketQuery(req.query));
+  const result = await ticketService.listTickets(
+    normalizeTicketQuery(req.query),
+  );
 
   res.status(200).json({
     success: true,
@@ -41,6 +46,7 @@ const updateTicket = asyncHandler(async (req, res) => {
   const ticket = await ticketService.updateTicket(
     req.params.ticketId,
     normalizeTicketInput(req.body),
+    req.user.userId,
   );
 
   res.status(200).json({
@@ -51,7 +57,7 @@ const updateTicket = asyncHandler(async (req, res) => {
 });
 
 const deleteTicket = asyncHandler(async (req, res) => {
-  await ticketService.deleteTicket(req.params.ticketId);
+  await ticketService.deleteTicket(req.params.ticketId, req.user.userId);
 
   res.status(200).json({
     success: true,
