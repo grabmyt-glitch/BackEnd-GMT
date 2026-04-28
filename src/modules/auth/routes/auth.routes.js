@@ -11,6 +11,9 @@ router.post("/users/check", authController.checkUserExists);
 router.post("/signup", authController.signup);
 router.post("/verify-email", authController.verifyEmail);
 router.post("/signin", authController.signin);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
+router.post("/verify-reset", authController.verifyResetToken);
 
 // User CRUD endpoints
 router.get("/users", userController.getAllUsers);

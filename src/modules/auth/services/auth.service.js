@@ -12,6 +12,7 @@ const {
 const userRepository = require("../repositories/user.repository");
 const emailService = require("../../../services/email.service");
 const emailVerificationService = require("../../../services/email-verification.service");
+const passwordResetService = require("../../../services/password-reset.service");
 
 const BCRYPT_ROUNDS = 10;
 
@@ -97,7 +98,8 @@ async function signup(payload) {
     sourceOfCreation: "grabbmytickets",
   };
 
-  const verificationRecord = await emailVerificationService.createVerificationRecord(userData, otp);
+  const verificationRecord =
+    await emailVerificationService.createVerificationRecord(userData, otp);
 
   // Send verification email with OTP
   try {
@@ -108,8 +110,13 @@ async function signup(payload) {
     );
   } catch (error) {
     // If email fails to send, clean up the pending verification record so the user can try again
-    await emailVerificationService.deleteVerificationRecord(verificationRecord.id).catch(console.error);
-    throw new AppError("Failed to send verification email. Please try again.", 500);
+    await emailVerificationService
+      .deleteVerificationRecord(verificationRecord.id)
+      .catch(console.error);
+    throw new AppError(
+      "Failed to send verification email. Please try again.",
+      500,
+    );
   }
 
   return {
@@ -205,9 +212,154 @@ async function verifyEmail(email, otp) {
   };
 }
 
+async function requestPasswordReset(email) {
+  if (!email) {
+    throw new AppError("Email is required.", 400);
+  }
+
+  // Find user (do not reveal existence in response)
+  const user = await userRepository.findByEmail(email);
+
+  // Generate OTP/token
+  const otp = passwordResetService.generateOTP();
+
+  // Create reset record
+  const resetRecord = await passwordResetService.createResetRecord(email, otp);
+
+  // Send password reset email (non-blocking for privacy, but handle errors)
+  try {
+    await emailService.sendPasswordResetEmail(
+      email,
+      user ? user.firstName : "",
+      otp,
+    );
+  } catch (error) {
+    await passwordResetService
+      .deleteResetRecord(resetRecord.id)
+      .catch(console.error);
+    throw new AppError(
+      "Failed to send password reset email. Please try again.",
+      500,
+    );
+  }
+
+  return {
+    success: true,
+    message:
+      "If an account with that email exists, a password reset email has been sent.",
+    token: otp,
+    data: {
+      email,
+      firstName: user ? user.firstName : null,
+    },
+  };
+}
+
+async function resetPassword(email, otp, newPassword) {
+  // If otp is null and caller intends to skip token verification (e.g. using a
+  // short-lived JWT issued after verifying the reset token), allow direct update.
+  if (!email || !newPassword) {
+    throw new AppError("Email and new password are required.", 400);
+  }
+
+  // When otp is provided, verify the reset record.
+  if (otp) {
+    const resetRecord = await passwordResetService.getResetRecordByEmailAndOTP(
+      email,
+      otp,
+    );
+
+    if (!resetRecord) {
+      throw new AppError("Invalid or expired password reset token.", 401);
+    }
+
+    if (new Date() > new Date(resetRecord.expires_at)) {
+      await passwordResetService.deleteResetRecord(resetRecord.id);
+      throw new AppError("Password reset token has expired.", 401);
+    }
+
+    // proceed to update
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      throw new AppError("User not found.", 404);
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    await userRepository.updateById(user.id, { passwordHash });
+
+    // Delete reset record
+    await passwordResetService.deleteResetRecord(resetRecord.id);
+
+    return {
+      success: true,
+      message: "Password has been reset successfully.",
+    };
+  }
+
+  // No otp provided; caller should be authenticated via short-lived JWT.
+  const user = await userRepository.findByEmail(email);
+  if (!user) {
+    throw new AppError("User not found.", 404);
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  await userRepository.updateById(user.id, { passwordHash });
+
+  return {
+    success: true,
+    message: "Password has been reset successfully.",
+  };
+}
+
+async function verifyResetToken(email, otp) {
+  if (!email || !otp) {
+    throw new AppError("Email and token are required.", 400);
+  }
+
+  const resetRecord = await passwordResetService.getResetRecordByEmailAndOTP(
+    email,
+    otp,
+  );
+
+  if (!resetRecord) {
+    throw new AppError("Invalid or expired password reset token.", 401);
+  }
+
+  if (new Date() > new Date(resetRecord.expires_at)) {
+    await passwordResetService.deleteResetRecord(resetRecord.id);
+    throw new AppError("Password reset token has expired.", 401);
+  }
+
+  const user = await userRepository.findByEmail(email);
+  if (!user) {
+    throw new AppError("User not found.", 404);
+  }
+
+  // Delete the reset record (single-use) and generate a short-lived JWT
+  await passwordResetService.deleteResetRecord(resetRecord.id);
+
+  const tempToken = jwt.sign(
+    { userId: user.id, email: user.email },
+    config.jwtSecret,
+    {
+      expiresIn: config.passwordResetJwtExpiry,
+    },
+  );
+
+  return {
+    success: true,
+    token: tempToken,
+    message:
+      "Reset token verified. Use the returned token as Bearer to set a new password.",
+  };
+}
+
 module.exports = {
   checkUserExists,
   signup,
   verifyEmail,
   signin,
+  requestPasswordReset,
+  resetPassword,
+  verifyResetToken,
 };

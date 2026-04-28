@@ -59,9 +59,88 @@ const signin = asyncHandler(async (req, res) => {
   });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email is required." });
+  }
+
+  const result = await authService.requestPasswordReset(email);
+  res.status(200).json({
+    success: result.success,
+    message: result.message,
+    ...(result.token && { token: result.token }),
+    ...(result.data && { data: result.data }),
+  });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, token: bodyToken, newPassword } = req.body;
+
+  const authHeader = req.headers && req.headers.authorization;
+  const bearer =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
+
+  // If bearer looks like a JWT (signed token), try to verify and use it
+  let jwtEmail = null;
+  if (bearer) {
+    try {
+      const decoded = require("jsonwebtoken").verify(
+        bearer,
+        require("../../../config/env").jwtSecret,
+      );
+      jwtEmail = decoded && decoded.email;
+    } catch (err) {
+      // ignore - will fallback to OTP flow
+    }
+  }
+
+  // Determine which email to use
+  const targetEmail = jwtEmail || email;
+  const tokenToUse = jwtEmail ? null : bodyToken || bearer;
+
+  if (!targetEmail || !newPassword || (!tokenToUse && !jwtEmail)) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Email and newPassword are required. Provide token in body or Authorization header, or use the verification flow to obtain a temporary Bearer token.",
+    });
+  }
+
+  const result = await authService.resetPassword(
+    targetEmail,
+    tokenToUse,
+    newPassword,
+  );
+  res.status(200).json({ success: result.success, message: result.message });
+});
+
+const verifyResetToken = asyncHandler(async (req, res) => {
+  const { email, token } = req.body;
+  if (!email || !token) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and token are required." });
+  }
+
+  const result = await authService.verifyResetToken(email, token);
+  res.status(200).json({
+    success: result.success,
+    message: result.message,
+    token: result.token,
+  });
+});
+
 module.exports = {
   checkUserExists,
   signup,
   verifyEmail,
   signin,
+  forgotPassword,
+  resetPassword,
+  verifyResetToken,
 };

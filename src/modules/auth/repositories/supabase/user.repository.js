@@ -77,7 +77,7 @@ async function findById(userId) {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select("*")
-    .eq("id", userId)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
@@ -128,7 +128,7 @@ async function updateById(userId, updates) {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .update(toPersistence(updates))
-    .eq("id", userId)
+    .eq("user_id", userId)
     .select()
     .single();
 
@@ -147,7 +147,7 @@ async function deleteById(userId) {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .delete()
-    .eq("id", userId)
+    .eq("user_id", userId)
     .select()
     .single();
 

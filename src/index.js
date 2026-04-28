@@ -17,7 +17,10 @@ async function logSupabaseStatus() {
   const supabase = require("./config/supabase");
 
   try {
-    const { error } = await supabase.from(ticketsTable).select("ticket_id").limit(1);
+    const { error } = await supabase
+      .from(ticketsTable)
+      .select("ticket_id")
+      .limit(1);
 
     if (error && error.code !== "PGRST205") {
       console.error(`Supabase connection failed: ${error.message}`);
@@ -47,7 +50,9 @@ async function bootstrap() {
       const migrationResult = await runMigrationsIfEnabled();
 
       if (migrationResult.executed && migrationResult.executed.length > 0) {
-        console.log(`Applied migrations on startup: ${migrationResult.executed.join(", ")}`);
+        console.log(
+          `Applied migrations on startup: ${migrationResult.executed.join(", ")}`,
+        );
       } else if (!migrationResult.skipped) {
         console.log("No pending migrations found on startup.");
       }

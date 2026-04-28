@@ -48,6 +48,8 @@ process.env.BREVO_SENDER_EMAIL =
   process.env.BREVO_SENDER_EMAIL || "noreply@example.com";
 process.env.EMAIL_VERIFICATION_EXPIRY =
   process.env.EMAIL_VERIFICATION_EXPIRY || "15m";
+process.env.PASSWORD_RESET_JWT_EXPIRY =
+  process.env.PASSWORD_RESET_JWT_EXPIRY || "15m";
 process.env.FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 module.exports = {
@@ -65,6 +67,7 @@ module.exports = {
   brevoApiKey: process.env.BREVO_API_KEY,
   brevoSenderEmail: process.env.BREVO_SENDER_EMAIL,
   emailVerificationExpiry: process.env.EMAIL_VERIFICATION_EXPIRY,
+  passwordResetJwtExpiry: process.env.PASSWORD_RESET_JWT_EXPIRY,
   frontendUrl: process.env.FRONTEND_URL,
   databaseUrlConfigured: Boolean(
     process.env.DATABASE_URL ||
