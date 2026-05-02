@@ -1,0 +1,84 @@
+Backend API Payload & Response Reference
+Generated at: 2026-05-02T19:47:12.291Z
+
+Total endpoints: 20
+
+1. Endpoint: POST /api/v1/auth/forgot-password
+Body: fields=[email] | mandatory=[none] | optional=[email]
+Response: 200 -> message, success, token
+
+2. Endpoint: POST /api/v1/auth/reset-password
+Body: fields=[email, newPassword, token] | mandatory=[none] | optional=[email, newPassword, token]
+Response: 400 -> message, success | 200 -> message, success
+
+3. Endpoint: POST /api/v1/auth/signin
+Body: fields=[email, password, phone] | mandatory=[Provide only one login method: email/password or phone. | Field `password` is required for email signin.] | optional=[email, password, phone]
+Response: 200 -> data, message, success
+
+4. Endpoint: POST /api/v1/auth/signup
+Body: fields=[email, firstName, lastName, password, phone] | mandatory=[Field `firstName` is required. | Field `lastName` is required. | Provide either `email` or `phone` for signup. | Field `password` is required when using `email` signup.] | optional=[email, firstName, lastName, password, phone]
+Response: 201 -> data, message, success
+
+5. Endpoint: GET /api/v1/auth/users
+Body: none
+Response: 200 -> data, message, pagination, success
+
+6. Endpoint: DELETE /api/v1/auth/users/:userId
+Body: none
+Response: 200 -> message, success
+
+7. Endpoint: GET /api/v1/auth/users/:userId
+Body: none
+Response: 200 -> data, message, success
+
+8. Endpoint: PUT /api/v1/auth/users/:userId
+Body: fields=[dynamic object] | mandatory=[none] | optional=[none]
+Response: 200 -> data, message, success
+
+9. Endpoint: POST /api/v1/auth/users/check
+Body: fields=[email, phone] | mandatory=[Provide either `email` or `phone`.] | optional=[email, phone]
+Response: 200 -> data, message, success
+
+10. Endpoint: POST /api/v1/auth/verify-email
+Body: fields=[email, otp] | mandatory=[none] | optional=[email, otp]
+Response: 400 -> errors, message, success | 200 -> data, message, success
+
+11. Endpoint: POST /api/v1/auth/verify-reset
+Body: fields=[email, token] | mandatory=[none] | optional=[email, token]
+Response: 200 -> message, success, token
+
+12. Endpoint: POST /api/v1/forgot-password
+Body: fields=[email] | mandatory=[none] | optional=[email]
+Response: 200 -> message, success, token
+
+13. Endpoint: POST /api/v1/reset-password
+Body: fields=[email, newPassword, token] | mandatory=[none] | optional=[email, newPassword, token]
+Response: 400 -> message, success | 200 -> message, success
+
+14. Endpoint: GET /api/v1/tickets
+Body: none
+Response: 200 -> data, message, pagination, success
+
+15. Endpoint: POST /api/v1/tickets
+Body: fields=[date, endTime, from, personalInformation, personalInformation.email, personalInformation.phone, place, price, startTime, to, type] | mandatory=[Field `from` is required. | Field `to` is required. | Field `place` is required.] | optional=[date, endTime, from, personalInformation, personalInformation.email, personalInformation.phone, place, price, startTime, to, type]
+Response: 201 -> data, message, success
+
+16. Endpoint: DELETE /api/v1/tickets/:ticketId
+Body: none
+Response: 200 -> message, success
+
+17. Endpoint: GET /api/v1/tickets/:ticketId
+Body: none
+Response: 200 -> data, message, success
+
+18. Endpoint: PATCH /api/v1/tickets/:ticketId
+Body: fields=[date, endTime, from, personalInformation, personalInformation.email, personalInformation.phone, place, price, startTime, to, type] | mandatory=[at least one field to update] | optional=[date, endTime, from, personalInformation, personalInformation.email, personalInformation.phone, place, price, startTime, to, type]
+Response: 200 -> data, message, success
+
+19. Endpoint: PUT /api/v1/tickets/:ticketId
+Body: fields=[date, endTime, from, personalInformation, personalInformation.email, personalInformation.phone, place, price, startTime, to, type] | mandatory=[at least one field to update] | optional=[date, endTime, from, personalInformation, personalInformation.email, personalInformation.phone, place, price, startTime, to, type]
+Response: 200 -> data, message, success
+
+20. Endpoint: POST /api/v1/verify-reset
+Body: fields=[email, token] | mandatory=[none] | optional=[email, token]
+Response: 200 -> message, success, token

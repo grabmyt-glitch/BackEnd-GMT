@@ -19,8 +19,8 @@ function buildDatabaseUrlFromParts() {
 function getDatabaseUrl() {
   return (
     process.env.DATABASE_URL ||
-    buildDatabaseUrlFromParts() ||
     process.env.SUPABASE_DB_URL ||
+    buildDatabaseUrlFromParts() ||
     ""
   );
 }

@@ -103,12 +103,19 @@ function validateTicketPayload(payload, { partial = false } = {}) {
     !partial;
 
   if (hasPersonalInformation) {
-    if ((!partial || hasEmailField) && (!fields.email || !/^\S+@\S+\.\S+$/.test(fields.email))) {
+    const hasAnyContact = Boolean(fields.email) || Boolean(fields.phone);
+    if (!partial && !hasAnyContact) {
+      errors.push(
+        "Provide at least one contact field: `personalInformation.email` or `personalInformation.phone`.",
+      );
+    }
+
+    if (hasEmailField && fields.email && !/^\S+@\S+\.\S+$/.test(fields.email)) {
       errors.push("Field `personalInformation.email` must be a valid email.");
     }
 
-    if ((!partial || hasPhoneField) && !fields.phone) {
-      errors.push("Field `personalInformation.phone` is required.");
+    if (hasPhoneField && !fields.phone) {
+      errors.push("Field `personalInformation.phone` cannot be empty.");
     }
 
     normalized.personalInformation = {};

@@ -4,8 +4,9 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "api:docs": "node src/scripts/generate-payload-doc.js",
+    "start": "npm run api:docs && node src/index.js",
+    "dev": "npm run api:docs && nodemon src/index.js",
     "dev:local": "cross-env APP_ENV=local NODE_ENV=development nodemon src/index.js",
     "dev:development": "cross-env APP_ENV=development NODE_ENV=development nodemon src/index.js",
     "migrate": "node src/scripts/migrate.js",
