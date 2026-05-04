@@ -3,8 +3,8 @@ const app = require("./app");
 const { isDatabaseUrlConfigured } = require("./config/database");
 const { runMigrationsIfEnabled } = require("./services/migration.service");
 
-const PORT = env.port;
-const HOST = env.host;
+const PORT = process.env.PORT || 10000;
+const HOST = "0.0.0.0";
 const dbProvider = env.dbProvider;
 const ticketsTable = env.supabaseTicketsTable;
 
@@ -60,7 +60,7 @@ async function bootstrap() {
   }
 
   app.listen(PORT, HOST, async () => {
-    console.log(`Server is running at http://${HOST}:${PORT} (${env.appEnv})`);
+    console.log(`Server running on port ${PORT}`);
     await logSupabaseStatus();
   });
 }

@@ -31,8 +31,8 @@ process.env.APP_ENV = normalizedEnvironment;
 process.env.NODE_ENV =
   process.env.NODE_ENV ||
   (normalizedEnvironment === "production" ? "production" : "development");
-process.env.PORT = process.env.PORT || "3000";
-process.env.HOST = process.env.HOST || "localhost";
+process.env.PORT = process.env.PORT || "10000";
+process.env.HOST = process.env.HOST || "0.0.0.0";
 process.env.CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 process.env.DB_PROVIDER = process.env.DB_PROVIDER || "supabase";
 process.env.SUPABASE_TICKETS_TABLE =
