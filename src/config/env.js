@@ -7,7 +7,7 @@ const rootDir = path.resolve(__dirname, "..", "..");
 const baseEnvFile = path.join(rootDir, ".env");
 
 if (fs.existsSync(baseEnvFile)) {
-  dotenv.config({ path: baseEnvFile, override: true });
+  dotenv.config({ path: baseEnvFile });
 }
 
 const requestedEnvironment =
@@ -24,7 +24,7 @@ const normalizedEnvironment =
 const environmentEnvFile = path.join(rootDir, `.env.${normalizedEnvironment}`);
 
 if (fs.existsSync(environmentEnvFile)) {
-  dotenv.config({ path: environmentEnvFile, override: true });
+  dotenv.config({ path: environmentEnvFile });
 }
 
 process.env.APP_ENV = normalizedEnvironment;

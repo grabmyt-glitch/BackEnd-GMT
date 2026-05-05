@@ -39,6 +39,17 @@ function getPool() {
       );
     }
 
+    try {
+      // Basic validation if it's a URL
+      if (connectionString.includes("://")) {
+        new URL(connectionString);
+      }
+    } catch (e) {
+      throw new Error(
+        `Database connection failed: The provided connection string is not a valid URL.`,
+      );
+    }
+
     pool = new Pool({
       connectionString,
       ssl:
